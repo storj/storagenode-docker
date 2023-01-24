@@ -5,7 +5,7 @@ RUN apt-get update \
      && apt-get install -y --no-install-recommends ca-certificates supervisor unzip wget
 RUN update-ca-certificates
 RUN mkdir -p /var/log/supervisor /app
-COPY cmd/storagenode/docker-base/ /
+COPY docker-base/ /
 # set permissions to allow non-root access
 RUN chmod -R a+rw /etc/supervisor /var/log/supervisor /app
 # remove the default supervisord.conf

@@ -1,8 +1,7 @@
-ARG DOCKER_ARCH
+ARG BASE_TAG
 ARG DOCKER_PLATFORM
 
-FROM --platform=${DOCKER_PLATFORM:-linux/amd64} storjlabs/storagenode-base:70e276ecb-${DOCKER_ARCH:-amd64}
-ARG TAG
+FROM --platform=${DOCKER_PLATFORM:-linux/amd64} storjlabs/storagenode-base:${BASE_TAG:latest}
 ARG GOARCH
 ARG VERSION_SERVER_URL
 ARG SUPERVISOR_SERVER
@@ -12,9 +11,9 @@ ENV SUPERVISOR_SERVER ${SUPERVISOR_SERVER:-unix}
 EXPOSE 28967
 EXPOSE 14002
 # copy the files individually to avoid overriding the permissions on the folders
-COPY cmd/storagenode/docker/entrypoint /entrypoint
-COPY cmd/storagenode/docker/app/dashboard.sh /app/dashboard.sh
-COPY cmd/storagenode/docker/bin/systemctl /bin/systemctl
+COPY docker/entrypoint /entrypoint
+COPY docker/app/dashboard.sh /app/dashboard.sh
+COPY docker/bin/systemctl /bin/systemctl
 WORKDIR /app
 ENTRYPOINT ["/entrypoint"]
 
