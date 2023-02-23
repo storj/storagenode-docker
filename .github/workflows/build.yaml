@@ -7,7 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build Base Image
-        run: make storagenode-base-image
       - name: Build Images
         run: make images

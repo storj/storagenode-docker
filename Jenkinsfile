@@ -14,12 +14,6 @@ pipeline {
             }
         }
 
-	    stage('Build Base Image') {
-		    steps {
-			    sh "make storagenode-base-image"
-		    }
-	    }
-
 	    stage('Build Images') {
 		    steps {
 			    sh "make images"
