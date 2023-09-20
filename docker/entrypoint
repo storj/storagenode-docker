@@ -62,6 +62,7 @@ if [ "${AUTO_UPDATE:-}" != "true" ]; then
 fi
 
 : ${STORJ_CONSOLE_ADDRESS:=0.0.0.0:14002}
+export STORJ_CONSOLE_ADDRESS
 SNO_RUN_PARAMS="${RUN_PARAMS}"
 if [ -n "${STORAGE:-}" ]; then
   SNO_RUN_PARAMS="${SNO_RUN_PARAMS} --storage.allocated-disk-space=${STORAGE}"
