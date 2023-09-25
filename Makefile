@@ -8,21 +8,21 @@ images: amd64-image arm64-image arm32-image ## Build storagenode Docker images
 
 .PHONY: amd64-image
 amd64-image: ## Build storagenode Docker image for amd64
-	${DOCKER_BUILDX} --pull=true -t storjlabs/storagenode:${TAG}${CUSTOMTAG}-amd64 \
+	${DOCKER_BUILDX} --load --pull=true -t storjlabs/storagenode:${TAG}${CUSTOMTAG}-amd64 \
 		--platform=linux/amd64 \
 		--build-arg=GOARCH=amd64 \
 		-f Dockerfile .
 
 .PHONY: arm32-image
 arm32-image: ## Build storagenode Docker image for arm32v5
-	${DOCKER_BUILDX} --pull=true -t storjlabs/storagenode:${TAG}${CUSTOMTAG}-arm32v5 \
+	${DOCKER_BUILDX} --load --pull=true -t storjlabs/storagenode:${TAG}${CUSTOMTAG}-arm32v5 \
 		--platform=linux/arm/v5 \
 		--build-arg=GOARCH=arm --build-arg=DOCKER_ARCH=arm32v5 --build-arg=DOCKER_PLATFORM=linux/arm/v5 \
 		-f Dockerfile .
 
 .PHONY: arm64-image
 arm64-image: ## Build storagenode Docker image for arm64v8
-	${DOCKER_BUILDX} --pull=true -t storjlabs/storagenode:${TAG}${CUSTOMTAG}-arm64v8 \
+	${DOCKER_BUILDX} --load --pull=true -t storjlabs/storagenode:${TAG}${CUSTOMTAG}-arm64v8 \
 		--platform=linux/arm64/v8 \
 		--build-arg=GOARCH=arm64 --build-arg=DOCKER_ARCH=arm64v8 --build-arg=DOCKER_PLATFORM=linux/arm64 \
 		-f Dockerfile .
