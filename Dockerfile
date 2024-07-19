@@ -14,7 +14,12 @@ RUN apt-get install -y --no-install-recommends ca-certificates supervisor unzip 
 RUN update-ca-certificates
 
 RUN mkdir -p /var/log/supervisor /app
-COPY docker/ /
+
+COPY docker/app /
+COPY docker/bin /
+COPY docker/etc /
+COPY docker/entrypoint /
+
 # set permissions to allow non-root access
 RUN chmod -R a+rw /etc/supervisor /var/log/supervisor /app
 # remove the default supervisord.conf
