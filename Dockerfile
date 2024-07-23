@@ -15,10 +15,11 @@ RUN update-ca-certificates
 
 RUN mkdir -p /var/log/supervisor /app
 
-COPY docker/app /
-COPY docker/bin /
-COPY docker/etc /
-COPY docker/entrypoint /
+ADD docker/app/dashboard.sh /app/dashboard.sh
+ADD docker/bin/stop-supervisor /bin/stop-supervisor
+ADD docker/bin/systemctl /bin/systemctl
+ADD docker/etc/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
+ADD docker/entrypoint /entrypoint
 
 # set permissions to allow non-root access
 RUN chmod -R a+rw /etc/supervisor /var/log/supervisor /app
