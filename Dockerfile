@@ -5,9 +5,9 @@ FROM --platform=${DOCKER_PLATFORM:-linux/amd64} ${DOCKER_ARCH:-amd64}/debian:boo
 ARG GOARCH
 ARG VERSION_SERVER_URL
 ARG SUPERVISOR_SERVER
-ENV GOARCH=${GOARCH:-amd64}
-ENV VERSION_SERVER_URL=${VERSION_SERVER_URL:-https://version.storj.io}
-ENV SUPERVISOR_SERVER=${SUPERVISOR_SERVER:-unix}
+ENV GOARCH=${GOARCH:-amd64} \
+    VERSION_SERVER_URL=${VERSION_SERVER_URL:-https://version.storj.io} \
+    SUPERVISOR_SERVER=${SUPERVISOR_SERVER:-unix}
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends ca-certificates supervisor unzip wget
@@ -15,11 +15,7 @@ RUN update-ca-certificates
 
 RUN mkdir -p /var/log/supervisor /app
 
-ADD docker/app/dashboard.sh /app/dashboard.sh
-ADD docker/bin/stop-supervisor /bin/stop-supervisor
-ADD docker/bin/systemctl /bin/systemctl
-ADD docker/etc/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
-ADD docker/entrypoint /entrypoint
+COPY docker/ /
 
 # set permissions to allow non-root access
 RUN chmod -R a+rw /etc/supervisor /var/log/supervisor /app
