@@ -17,6 +17,8 @@ RUN mkdir -p /var/log/supervisor /app
 
 COPY docker/ /
 
+VOLUME /app/bin
+
 # set permissions to allow non-root access
 RUN chmod -R a+rw /etc/supervisor /var/log/supervisor /app
 # remove the default supervisord.conf
