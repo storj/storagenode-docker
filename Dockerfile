@@ -36,4 +36,5 @@ ENV ADDRESS="" \
     STORAGE="2.0TB" \
     SETUP="false" \
     AUTO_UPDATE="true" \
-    LOG_LEVEL=""
+    LOG_LEVEL="" \
+    BINARY_DIR="/app/config/bin"
