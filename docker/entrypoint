@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-BINARY_DIR=${BINARY_DIR:-/app/config/bin}
+BINARY_DIR=${BINARY_DIR:-/app/bin}
+BINARY_STORE=${BINARY_STORE:-/app/config/bin}
 
 get_default_url() {
   process=$1
@@ -9,20 +10,27 @@ get_default_url() {
   wget -O- "${VERSION_SERVER_URL}/processes/${process}/${version}/url?os=linux&arch=${GOARCH}"
 }
 
+copy_binary() {
+  binary=$1
+  mkdir -p "${BINARY_DIR}"
+  cp "${BINARY_STORE}/${binary}" "${BINARY_DIR}/${binary}"
+  chmod u+x "${BINARY_DIR}/${binary}"
+}
+
 get_binary() {
   binary=$1
   url=$2
   wget -O "/tmp/${binary}.zip" "${url}"
-  mkdir -p "${BINARY_DIR}"
-  unzip -p "/tmp/${binary}.zip" > "${BINARY_DIR}/${binary}"
+  mkdir -p "${BINARY_STORE}"
+  unzip -p "/tmp/${binary}.zip" > "${BINARY_STORE}/${binary}"
   rm "/tmp/${binary}.zip"
-  chmod u+x "${BINARY_DIR}/${binary}"
+  copy_binary $binary
 }
 
 # install storagenode and storagenode-updater binaries
 # during run of the container to not to release new docker image
 # on each new version of the storagenode binary.
-if [ ! -f "${BINARY_DIR}/storagenode-updater" ]; then
+if [ ! -f "${BINARY_STORE}/storagenode-updater" ]; then
   echo "downloading storagenode-updater"
   get_binary storagenode-updater "$(get_default_url storagenode-updater minimum)"
 
@@ -34,9 +42,11 @@ if [ ! -f "${BINARY_DIR}/storagenode-updater" ]; then
     echo "updating storagenode-updater"
     get_binary storagenode-updater "$(get_default_url storagenode-updater suggested)"
   fi
+else
+  copy_binary storagenode-updater
 fi
 
-if [ ! -f "${BINARY_DIR}/storagenode" ]; then
+if [ ! -f "${BINARY_STORE}/storagenode" ]; then
   echo "downloading storagenode"
 
   if ${BINARY_DIR}/storagenode-updater should-update storagenode \
@@ -48,6 +58,8 @@ if [ ! -f "${BINARY_DIR}/storagenode" ]; then
   else
     get_binary storagenode "$(get_default_url storagenode minimum)"
   fi
+else
+  copy_binary storagenode
 fi
 
 SUPERVISOR_SERVER="${SUPERVISOR_SERVER:-unix}"

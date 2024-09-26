@@ -37,4 +37,5 @@ ENV ADDRESS="" \
     SETUP="false" \
     AUTO_UPDATE="true" \
     LOG_LEVEL="" \
-    BINARY_DIR="/app/config/bin"
+    BINARY_DIR="/app/bin" \
+    BINARY_STORE="/app/config/bin"
