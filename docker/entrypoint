@@ -24,7 +24,20 @@ get_binary() {
   mkdir -p "${BINARY_STORE}"
   unzip -p "/tmp/${binary}.zip" > "${BINARY_STORE}/${binary}"
   rm "/tmp/${binary}.zip"
-  copy_binary $binary
+}
+
+should_update() {
+  binary=$1
+  copy_binary ${binary}
+  if ${BINARY_DIR}/storagenode-updater should-update ${binary} \
+        --binary-location "${BINARY_DIR}/${binary}" \
+        --identity-dir identity \
+        --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
+  then
+    echo "downloading ${binary}"
+    get_binary ${binary} "$(get_default_url ${binary} suggested)"
+    copy_binary ${binary}
+  fi
 }
 
 # install storagenode and storagenode-updater binaries
@@ -33,34 +46,14 @@ get_binary() {
 if [ ! -f "${BINARY_STORE}/storagenode-updater" ]; then
   echo "downloading storagenode-updater"
   get_binary storagenode-updater "$(get_default_url storagenode-updater minimum)"
-
-  if ${BINARY_DIR}/storagenode-updater should-update storagenode-updater \
-        --binary-location "${BINARY_DIR}/storagenode-updater" \
-        --identity-dir identity \
-        --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
-  then
-    echo "updating storagenode-updater"
-    get_binary storagenode-updater "$(get_default_url storagenode-updater suggested)"
-  fi
-else
-  copy_binary storagenode-updater
 fi
+should_update storagenode-updater
 
 if [ ! -f "${BINARY_STORE}/storagenode" ]; then
   echo "downloading storagenode"
-
-  if ${BINARY_DIR}/storagenode-updater should-update storagenode \
-      --binary-location "${BINARY_DIR}/storagenode" \
-      --identity-dir identity \
-      --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
-  then
-    get_binary storagenode "$(get_default_url storagenode suggested)"
-  else
-    get_binary storagenode "$(get_default_url storagenode minimum)"
-  fi
-else
-  copy_binary storagenode
+  get_binary storagenode "$(get_default_url storagenode minimum)"
 fi
+should_update storagenode
 
 SUPERVISOR_SERVER="${SUPERVISOR_SERVER:-unix}"
 
