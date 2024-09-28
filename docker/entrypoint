@@ -29,15 +29,19 @@ get_binary() {
 should_update() {
   binary=$1
   copy_binary ${binary}
-  if ${BINARY_DIR}/storagenode-updater should-update ${binary} \
-        --binary-location "${BINARY_DIR}/${binary}" \
-        --identity-dir identity \
-        --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
-  then
-    echo "downloading ${binary}"
-    get_binary ${binary} "$(get_default_url ${binary} suggested)"
-    copy_binary ${binary}
-  fi
+  for version in minimum suggested; do
+    if ${BINARY_DIR}/storagenode-updater should-update ${binary} \
+          --binary-location "${BINARY_DIR}/${binary}" \
+          --identity-dir identity \
+          --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
+    then
+      echo "downloading ${binary}"
+      get_binary ${binary} "$(get_default_url ${binary} ${version})"
+      copy_binary ${binary}
+    else
+      break
+    fi
+  done
 }
 
 # install storagenode and storagenode-updater binaries
