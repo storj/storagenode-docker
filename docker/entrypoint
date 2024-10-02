@@ -47,17 +47,13 @@ should_update() {
 # install storagenode and storagenode-updater binaries
 # during run of the container to not to release new docker image
 # on each new version of the storagenode binary.
-if [ ! -f "${BINARY_STORE}/storagenode-updater" ]; then
-  echo "downloading storagenode-updater"
-  get_binary storagenode-updater "$(get_default_url storagenode-updater minimum)"
-fi
-should_update storagenode-updater
-
-if [ ! -f "${BINARY_STORE}/storagenode" ]; then
-  echo "downloading storagenode"
-  get_binary storagenode "$(get_default_url storagenode minimum)"
-fi
-should_update storagenode
+for binary in storagenode-updater storagenode; do
+  if [ ! -f "${BINARY_STORE}/${binary}" ]; then
+    echo "downloading ${binary}"
+    get_binary ${binary} "$(get_default_url ${binary} minimum)"
+  fi
+  should_update ${binary}
+done
 
 SUPERVISOR_SERVER="${SUPERVISOR_SERVER:-unix}"
 
@@ -100,7 +96,7 @@ if [ "${SETUP:-}" = "true" ]; then
   exec ${BINARY_DIR}/storagenode setup ${SNO_RUN_PARAMS} ${*}
 else
   sed -i \
-  "s#^command=/app/bin/storagenode-updater\$#command=${BINARY_DIR}/storagenode-updater run --binary-location ${BINARY_DIR}/storagenode ${RUN_PARAMS} #" \
+  "s#^command=/app/bin/storagenode-updater\$#command=${BINARY_DIR}/storagenode-updater run --binary-location ${BINARY_DIR}/storagenode --binary-store-dir ${BINARY_STORE}/storagenode ${RUN_PARAMS} #" \
   /etc/supervisor/supervisord.conf
 
   sed -i \
