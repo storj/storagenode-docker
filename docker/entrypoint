@@ -96,7 +96,7 @@ if [ "${SETUP:-}" = "true" ]; then
   exec ${BINARY_DIR}/storagenode setup ${SNO_RUN_PARAMS} ${*}
 else
   sed -i \
-  "s#^command=/app/bin/storagenode-updater\$#command=${BINARY_DIR}/storagenode-updater run --binary-location ${BINARY_DIR}/storagenode --binary-store-dir ${BINARY_STORE}/storagenode ${RUN_PARAMS} #" \
+  "s#^command=/app/bin/storagenode-updater\$#command=${BINARY_DIR}/storagenode-updater run --binary-location ${BINARY_DIR}/storagenode --binary-store-dir ${BINARY_STORE} ${RUN_PARAMS} #" \
   /etc/supervisor/supervisord.conf
 
   sed -i \
