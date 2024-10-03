@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-BINARY_DIR=${BINARY_DIR:-/app/bin}
-BINARY_STORE=${BINARY_STORE:-/app/config/bin}
+BINARY_STORE_DIR=${BINARY_STORE_DIR:-/app/config/bin}
 
 get_default_url() {
   process=$1
@@ -12,17 +11,17 @@ get_default_url() {
 
 copy_binary() {
   binary=$1
-  mkdir -p "${BINARY_DIR}"
-  cp "${BINARY_STORE}/${binary}" "${BINARY_DIR}/${binary}"
-  chmod u+x "${BINARY_DIR}/${binary}"
+  mkdir -p "/app/bin"
+  cp "${BINARY_STORE_DIR}/${binary}" "/app/bin/${binary}"
+  chmod u+x "/app/bin/${binary}"
 }
 
 get_binary() {
   binary=$1
   url=$2
   wget -O "/tmp/${binary}.zip" "${url}"
-  mkdir -p "${BINARY_STORE}"
-  unzip -p "/tmp/${binary}.zip" > "${BINARY_STORE}/${binary}"
+  mkdir -p "${BINARY_STORE_DIR}"
+  unzip -p "/tmp/${binary}.zip" > "${BINARY_STORE_DIR}/${binary}"
   rm "/tmp/${binary}.zip"
 }
 
@@ -30,8 +29,8 @@ should_update() {
   binary=$1
   copy_binary ${binary}
   for version in minimum suggested; do
-    if ${BINARY_DIR}/storagenode-updater should-update ${binary} \
-          --binary-location "${BINARY_DIR}/${binary}" \
+    if /app/bin/storagenode-updater should-update ${binary} \
+          --binary-location "/app/bin/${binary}" \
           --identity-dir identity \
           --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
     then
@@ -48,7 +47,7 @@ should_update() {
 # during run of the container to not to release new docker image
 # on each new version of the storagenode binary.
 for binary in storagenode-updater storagenode; do
-  if [ ! -f "${BINARY_STORE}/${binary}" ]; then
+  if [ ! -f "${BINARY_STORE_DIR}/${binary}" ]; then
     echo "downloading ${binary}"
     get_binary ${binary} "$(get_default_url ${binary} minimum)"
   fi
@@ -92,15 +91,15 @@ if [ -n "${LOG_LEVEL:-}" ]; then
 fi
 
 if [ "${SETUP:-}" = "true" ]; then
-  echo "Running ${BINARY_DIR}/storagenode setup $SNO_RUN_PARAMS ${*}"
-  exec ${BINARY_DIR}/storagenode setup ${SNO_RUN_PARAMS} ${*}
+  echo "Running /app/bin/storagenode setup $SNO_RUN_PARAMS ${*}"
+  exec /app/bin/storagenode setup ${SNO_RUN_PARAMS} ${*}
 else
   sed -i \
-  "s#^command=/app/bin/storagenode-updater\$#command=${BINARY_DIR}/storagenode-updater run --binary-location ${BINARY_DIR}/storagenode --binary-store-dir ${BINARY_STORE} ${RUN_PARAMS} #" \
+  "s#^command=/app/bin/storagenode-updater\$#command=/app/bin/storagenode-updater run --binary-location /app/bin/storagenode --binary-store-dir ${BINARY_STORE_DIR} ${RUN_PARAMS} #" \
   /etc/supervisor/supervisord.conf
 
   sed -i \
-  "s#^command=/app/bin/storagenode\$#command=${BINARY_DIR}/storagenode run ${SNO_RUN_PARAMS} ${*}#" \
+  "s#^command=/app/bin/storagenode\$#command=/app/bin/storagenode run ${SNO_RUN_PARAMS} ${*}#" \
   /etc/supervisor/supervisord.conf
 
   # remove explicit user flag when container is run as non-root
