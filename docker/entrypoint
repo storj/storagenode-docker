@@ -1,61 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-
-BINARY_DIR=/app/bin
 BINARY_STORE_DIR=${BINARY_STORE_DIR:-/app/config/bin}
-
-get_default_url() {
-  process=$1
-  version=$2
-  wget -O- "${VERSION_SERVER_URL}/processes/${process}/${version}/url?os=linux&arch=${GOARCH}"
-}
-
-copy_binary() {
-  binary=$1
-  mkdir -p "${BINARY_DIR}"
-  cp "${BINARY_STORE_DIR}/${binary}" "${BINARY_DIR}/${binary}"
-  chmod u+x "${BINARY_DIR}/${binary}"
-}
-
-get_binary() {
-  binary=$1
-  url=$2
-  wget -O "/tmp/${binary}.zip" "${url}"
-  mkdir -p "${BINARY_STORE_DIR}"
-  unzip -p "/tmp/${binary}.zip" > "${BINARY_STORE_DIR}/${binary}"
-  rm "/tmp/${binary}.zip"
-}
-
-should_update() {
-  binary=$1
-  copy_binary ${binary}
-  for version in minimum suggested; do
-    if ${BINARY_DIR}/storagenode-updater should-update ${binary} \
-          --binary-location "${BINARY_DIR}/${binary}" \
-          --identity-dir identity \
-          --version.server-address="${VERSION_SERVER_URL}" 2>/dev/null
-    then
-      echo "downloading ${binary}"
-      get_binary ${binary} "$(get_default_url ${binary} ${version})"
-      copy_binary ${binary}
-    else
-      break
-    fi
-  done
-}
-
-# install storagenode and storagenode-updater binaries
-# during run of the container to not to release new docker image
-# on each new version of the storagenode binary.
-for binary in storagenode-updater storagenode; do
-  if [ ! -f "${BINARY_STORE_DIR}/${binary}" ]; then
-    echo "downloading ${binary}"
-    get_binary ${binary} "$(get_default_url ${binary} minimum)"
-  fi
-  should_update ${binary}
-done
-
-SUPERVISOR_SERVER="${SUPERVISOR_SERVER:-unix}"
 
 RUN_PARAMS="${RUN_PARAMS:-} --config-dir config"
 RUN_PARAMS="${RUN_PARAMS} --identity-dir identity"
@@ -92,47 +37,13 @@ if [ -n "${LOG_LEVEL:-}" ]; then
 fi
 
 if [ "${SETUP:-}" = "true" ]; then
-  echo "Running ${BINARY_DIR}/storagenode setup $SNO_RUN_PARAMS ${*}"
-  exec ${BINARY_DIR}/storagenode setup ${SNO_RUN_PARAMS} ${*}
+  echo "Running /app/bin/storagenode setup $SNO_RUN_PARAMS ${*}"
+  exec /app/bin/storagenode setup ${SNO_RUN_PARAMS} ${*}
 else
-  sed -i \
-  "s#^command=/app/bin/storagenode-updater\$#command=${BINARY_DIR}/storagenode-updater run --binary-location ${BINARY_DIR}/storagenode ${RUN_PARAMS} #" \
-  /etc/supervisor/supervisord.conf
+  export STORJ_SUPERVISOR_BINARY_STORE_DIR="${BINARY_STORE_DIR}"
+  export STORJ_SUPERVISOR_VERSION_SERVER_ADDRESS="${VERSION_SERVER_URL}"
+  export STORJ_SUPERVISOR_BINARY_LOCATION="/app/bin/storagenode"
 
-  sed -i \
-  "s#^command=/app/bin/storagenode\$#command=${BINARY_DIR}/storagenode run ${SNO_RUN_PARAMS} ${*}#" \
-  /etc/supervisor/supervisord.conf
-
-  # remove explicit user flag when container is run as non-root
-  if [ $EUID != "0" ]; then
-     sed -i "s#^user=root##" /etc/supervisor/supervisord.conf
-  fi
-
-  #
-  case ${SUPERVISOR_SERVER} in
-  	unix) # default
-  	;;
-  	public_port)
-  	  # replace unix_http_server section to inet_http_server
-  		sed -i "s#^\[unix_http_server\]\$#\[inet_http_server\]#" /etc/supervisor/supervisord.conf
-  		# replace unix socket file with tcp public port
-      sed -i "s#^file=/etc/supervisor/supervisor.sock\$#port=*:9001#" /etc/supervisor/supervisord.conf
-      # set server url to http server address
-      sed -i "s#^serverurl=unix:///etc/supervisor/supervisor.sock\$#serverurl=http://127.0.0.1:9001#" /etc/supervisor/supervisord.conf
-  	;;
-  	private_port)
-  	  # replace unix_http_server section to inet_http_server
-  		sed -i "s#^\[unix_http_server\]\$#\[inet_http_server\]#" /etc/supervisor/supervisord.conf
-  		# replace unix socket file with tcp private port .i.e. listens on only localhost
-      sed -i "s#^file=/etc/supervisor/supervisor.sock\$#port=127.0.0.1:9001#" /etc/supervisor/supervisord.conf
-       # set server url to http server address
-      sed -i "s#^serverurl=unix:///etc/supervisor/supervisor.sock\$#serverurl=http://127.0.0.1:9001#" /etc/supervisor/supervisord.conf
-  	;;
-  	*)
-  		echo "Invalid value '${SUPERVISOR_SERVER}' for SUPERVISOR_SERVER. Expected 'unix', 'public_port' or 'private_port'"
-  		exit 1
-  	;;
-  esac
-
-  exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+  echo "Running /app/bin/supervisor exec /app/bin/storagenode run $SNO_RUN_PARAMS ${*}"
+  exec /app/bin/supervisor exec /app/bin/storagenode run $SNO_RUN_PARAMS ${*}
 fi
